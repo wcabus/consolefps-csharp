@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace ConFPS
 {
@@ -34,22 +33,22 @@ namespace ConFPS
 
             if (_game.Keys['W'].Held)
             {
-                Move(1, elapsed, _game.Map);
+                Move(1, elapsed);
             }
 
             if (_game.Keys['S'].Held)
             {
-                Move(-1, elapsed, _game.Map);
+                Move(-1, elapsed);
             }
 
             if (_game.Keys['Q'].Held)
             {
-                Strafe(-1, elapsed, _game.Map);
+                Strafe(-1, elapsed);
             }
 
             if (_game.Keys['E'].Held)
             {
-                Strafe(1, elapsed, _game.Map);
+                Strafe(1, elapsed);
             }
 
             // Fire a bullet
@@ -65,7 +64,7 @@ namespace ConFPS
             }
         }
 
-        private void Move(int direction, float elapsed, Map map)
+        private void Move(int direction, float elapsed)
         {
             var dx = (float)Math.Sin(Angle) * Speed * elapsed;
             var dy = (float)Math.Cos(Angle) * Speed * elapsed;
@@ -73,14 +72,16 @@ namespace ConFPS
             X += direction * dx;
             Y += direction * dy;
 
-            if (map.HitsWall((int)X, (int)Y))
+            if (_game.Map.HitsWall((int)X, (int)Y))
             {
                 X -= direction * dx;
                 Y -= direction * dy;
             }
+
+            Clamp();
         }
 
-        private void Strafe(int direction, float elapsed, Map map)
+        private void Strafe(int direction, float elapsed)
         {
             var dx = (float)Math.Cos(Angle) * Speed * elapsed;
             var dy = -1 * (float)Math.Sin(Angle) * Speed * elapsed;
@@ -88,10 +89,35 @@ namespace ConFPS
             X += direction * dx;
             Y += direction * dy;
 
-            if (map.HitsWall((int)X, (int)Y))
+            if (_game.Map.HitsWall((int)X, (int)Y))
             {
                 X -= direction * dx;
                 Y -= direction * dy;
+            }
+
+            Clamp();
+        }
+
+        private void Clamp()
+        {
+            if (X < 0)
+            {
+                X = 0;
+            }
+
+            if (X > _game.Map.Width - 1)
+            {
+                X = _game.Map.Width - 1;
+            }
+
+            if (Y < 0)
+            {
+                Y = 0;
+            }
+
+            if (Y > _game.Map.Height - 1)
+            {
+                Y = _game.Map.Height - 1;
             }
         }
     }
