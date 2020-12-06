@@ -1,9 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace ConFPS
 {
     public class Player
     {
+        private readonly Game _game;
+        private readonly Random _random = new Random();
+
+        public Player(Game game)
+        {
+            _game = game;
+        }
+
         public float X { get; set; }
         public float Y { get; set; }
         public float Angle { get; set; }
@@ -11,36 +20,48 @@ namespace ConFPS
 
         private const float Speed = 5f;
 
-        public void HandleInput(in KeyState[] keys, float elapsed, Map map)
+        public void HandleInput(float elapsed)
         {
-            if (keys['A'].Held)
+            if (_game.Keys['A'].Held)
             {
                 Angle -= .75f * Speed * elapsed;
             }
 
-            if (keys['D'].Held)
+            if (_game.Keys['D'].Held)
             {
                 Angle += .75f * Speed * elapsed;
             }
 
-            if (keys['W'].Held)
+            if (_game.Keys['W'].Held)
             {
-                Move(1, elapsed, map);
+                Move(1, elapsed, _game.Map);
             }
 
-            if (keys['S'].Held)
+            if (_game.Keys['S'].Held)
             {
-                Move(-1, elapsed, map);
+                Move(-1, elapsed, _game.Map);
             }
 
-            if (keys['Q'].Held)
+            if (_game.Keys['Q'].Held)
             {
-                Strafe(-1, elapsed, map);
+                Strafe(-1, elapsed, _game.Map);
             }
 
-            if (keys['E'].Held)
+            if (_game.Keys['E'].Held)
             {
-                Strafe(1, elapsed, map);
+                Strafe(1, elapsed, _game.Map);
+            }
+
+            // Fire a bullet
+            if (_game.Keys[VirtualKeys.VK_SPACE].Released)
+            {
+                var bullet = new GameObject(X, Y, _game.BulletSprite);
+
+                var noise = ((float) _random.NextDouble() - 0.5f) * 0.1f;
+                bullet.VX = (float)Math.Sin(Angle + noise) * 8f;
+                bullet.VY = (float)Math.Cos(Angle + noise) * 8f;
+                
+                _game.AddObject(bullet);
             }
         }
 

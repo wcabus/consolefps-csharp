@@ -15,11 +15,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="fireball.sprite" />
     <None Remove="lamp.sprite" />
     <None Remove="wall.sprite" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="fireball.sprite">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="lamp.sprite">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

@@ -7,18 +7,23 @@ namespace ConFPS
 {
     public class Game : ConsoleGameEngine
     {
-        private Map _map;
         private Player _player;
-        private bool _showMap;
+        private bool _showMap = true;
         
         private Sprite _wallSprite;
         private Sprite _lampSprite;
-        private List<MapObject> _objects = new List<MapObject>();
+        private Sprite _fireballSprite;
+        private readonly List<GameObject> _objects = new List<GameObject>();
+
+        private float[] _depthBuffer;
 
         public Game()
         {
             AppName = "Shoot'em up";
         }
+
+        public Sprite BulletSprite => _fireballSprite;
+        public Map Map { get; private set; }
 
         public async Task<int> Run()
         {
@@ -29,22 +34,29 @@ namespace ConFPS
 
         protected override async Task<bool> OnUserCreate()
         {
-            _map = new Map
+            Map = new Map
             {
                 Width = 32,
                 Height = 32
             };
 
-            _player = new Player
+            _player = new Player(this)
             {
                 X = 8,
                 Y = 8
             };
 
+            _depthBuffer = new float[ScreenWidth];
+
             await LoadSprites();
-            InitializeMap(_map);
+            InitializeMap(Map);
 
             return true;
+        }
+
+        public void AddObject(GameObject o)
+        {
+            _objects.Add(o);
         }
 
         private void InitializeMap(Map map)
@@ -86,9 +98,9 @@ namespace ConFPS
 
             map.Layout = layout.ToString();
 
-            _objects.Add(new MapObject(8.5f, 8.5f, _lampSprite));
-            _objects.Add(new MapObject(7.5f, 7.5f, _lampSprite));
-            _objects.Add(new MapObject(10.5f, 3.5f, _lampSprite));
+            _objects.Add(new GameObject(8.5f, 8.5f, _lampSprite));
+            _objects.Add(new GameObject(7.5f, 7.5f, _lampSprite));
+            _objects.Add(new GameObject(10.5f, 3.5f, _lampSprite));
         }
 
         private async Task LoadSprites()
@@ -97,15 +109,15 @@ namespace ConFPS
                 .ContinueWith(t => _wallSprite = t.Result);
             var lampTask = Sprite.FromFile("lamp.sprite")
                 .ContinueWith(t => _lampSprite = t.Result);
+            var fireballTask = Sprite.FromFile("fireball.sprite")
+                .ContinueWith(t => _fireballSprite = t.Result);
 
-            await Task.WhenAll(wallTask, lampTask);
+            await Task.WhenAll(wallTask, lampTask, fireballTask);
         }
 
         protected override bool OnUserUpdate(float elapsedTime)
         {
-            var cornerDetection = new List<(float distance, float dot)>(4);
-
-            _player.HandleInput(Keys, elapsedTime, _map);
+            _player.HandleInput(elapsedTime);
             UpdateShowMap();
 
             for (var x = 0; x < ScreenWidth; x++)
@@ -121,7 +133,7 @@ namespace ConFPS
                 var eyeY = (float)Math.Cos(rayAngle);
                 var sampleX = 0f;
 
-                while (!hitWall && distanceToWall < _map.Depth)
+                while (!hitWall && distanceToWall < Map.Depth)
                 {
                     distanceToWall += depthIncrease;
 
@@ -129,12 +141,12 @@ namespace ConFPS
                     var testY = (int)(_player.Y + eyeY * distanceToWall);
 
                     // test if ray is out of bounds
-                    if (_map.OutOfBounds(testX, testY))
+                    if (Map.OutOfBounds(testX, testY))
                     {
                         hitWall = true;
-                        distanceToWall = _map.Depth;
+                        distanceToWall = Map.Depth;
                     }
-                    else if (_map.HitsWall(testX, testY))
+                    else if (Map.HitsWall(testX, testY))
                     {
                         hitWall = true;
 
@@ -169,6 +181,9 @@ namespace ConFPS
                 var ceiling = (int)(ScreenHeight / 2.0f - ScreenHeight / distanceToWall);
                 var floor = ScreenHeight - ceiling;
 
+                // Update depth buffer
+                _depthBuffer[x] = distanceToWall;
+
                 for (var y = ScreenHeight - 1; y >= 0; y--)
                 {
                     if (y <= ceiling)
@@ -179,7 +194,7 @@ namespace ConFPS
                     else if (y > ceiling && y <= floor)
                     {
                         // wall
-                        if (distanceToWall < _map.Depth)
+                        if (distanceToWall < Map.Depth)
                         {
                             var sampleY = ((float) y - ceiling) / (floor - ceiling);
                             Draw(x, y,
@@ -202,6 +217,16 @@ namespace ConFPS
             // Draw objects
             foreach (var obj in _objects)
             {
+                // update object position
+                obj.X += obj.VX * elapsedTime;
+                obj.Y += obj.VY * elapsedTime;
+
+                // remove object if it hits a wall
+                if (Map.HitsWall((int)obj.X, (int)obj.Y))
+                {
+                    obj.Remove = true;
+                }
+
                 // can the player see the object?
                 var vecX = obj.X - _player.X;
                 var vecY = obj.Y - _player.Y;
@@ -222,7 +247,7 @@ namespace ConFPS
                 }
 
                 var inPlayerFov = Math.Abs(objAngle) < Player.Fov / 2;
-                if (inPlayerFov && distanceFromPlayer >= .5f && distanceFromPlayer < _map.Depth)
+                if (inPlayerFov && distanceFromPlayer >= .5f && distanceFromPlayer < Map.Depth)
                 {
                     var objCeiling = (ScreenHeight / 2f) - (ScreenHeight / distanceFromPlayer);
                     var objFloor = ScreenHeight - objCeiling;
@@ -242,10 +267,12 @@ namespace ConFPS
                             var objColumn = (int)(middleOfObject + lx - (objWidth / 2f));
                             if (objColumn >= 0 && objColumn < ScreenWidth)
                             {
-                                if (c != ' ')
+                                if (c != ' ' && _depthBuffer[objColumn] >= distanceFromPlayer)
                                 {
                                     var col = obj.Sprite.SampleColor(sampleX, sampleY);
                                     Draw(objColumn, (int) (objCeiling + ly), c, col);
+
+                                    _depthBuffer[objColumn] = distanceFromPlayer;
                                 }
                             }
                         }
@@ -253,8 +280,10 @@ namespace ConFPS
                 }
             }
 
-            // WriteStats(_player);
-            DrawMap(_map, _player);
+            // Cleanup objects that should be removed
+            _objects.RemoveAll(x => x.Remove);
+
+            DrawMap(Map, _player);
 
             return true;
         }
@@ -265,12 +294,6 @@ namespace ConFPS
             {
                 _showMap = !_showMap;
             }
-        }
-
-        private void WriteStats(Player player)
-        {
-            var stats = $"X={player.X:F}, Y={player.Y:F}, A={player.Angle:F}";
-            DrawString(0, 0, stats);
         }
 
         private void DrawMap(Map map, Player player)

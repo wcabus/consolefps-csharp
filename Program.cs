@@ -9,7 +9,8 @@ namespace ConFPS
         {
             // await CreateWallSprite();
             // await CreateLampSprite();
-            
+            // await CreateFireballSprite();
+
             var game = new Game();
             return await game.Run();
         }
@@ -333,6 +334,68 @@ namespace ConFPS
             lamp.SetGlyph(4, y, PixelType.PIXEL_SOLID);
 
             await lamp.Save("lamp.sprite");
+        }
+
+        private static async Task CreateFireballSprite()
+        {
+            var fireball = new Sprite(8, 32);
+
+            var y = 12;
+            fireball.SetColor(3, y, Color.FG_DARK_RED);
+            fireball.SetColor(4, y, Color.FG_DARK_RED);
+            fireball.SetGlyph(3, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(4, y, PixelType.PIXEL_SOLID);
+            y++;
+            fireball.SetColor(2, y, Color.FG_DARK_YELLOW);
+            fireball.SetColor(3, y, Color.FG_RED);
+            fireball.SetColor(4, y, Color.FG_RED);
+            fireball.SetColor(5, y, Color.FG_DARK_YELLOW);
+            fireball.SetGlyph(2, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(3, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(4, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(5, y, PixelType.PIXEL_SOLID);
+            y++;
+            fireball.SetColor(1, y, Color.FG_DARK_RED);
+            fireball.SetColor(2, y, Color.FG_RED);
+            fireball.SetColor(3, y, Color.FG_YELLOW);
+            fireball.SetColor(4, y, Color.FG_YELLOW);
+            fireball.SetColor(5, y, Color.FG_RED);
+            fireball.SetColor(6, y, Color.FG_DARK_RED);
+            fireball.SetGlyph(1, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(2, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(3, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(4, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(5, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(6, y, PixelType.PIXEL_SOLID);
+            y++;
+            fireball.SetColor(1, y, Color.FG_DARK_RED);
+            fireball.SetColor(2, y, Color.FG_RED);
+            fireball.SetColor(3, y, Color.FG_YELLOW);
+            fireball.SetColor(4, y, Color.FG_YELLOW);
+            fireball.SetColor(5, y, Color.FG_RED);
+            fireball.SetColor(6, y, Color.FG_DARK_RED);
+            fireball.SetGlyph(1, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(2, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(3, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(4, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(5, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(6, y, PixelType.PIXEL_SOLID);
+            y++;
+            fireball.SetColor(2, y, Color.FG_DARK_YELLOW);
+            fireball.SetColor(3, y, Color.FG_RED);
+            fireball.SetColor(4, y, Color.FG_RED);
+            fireball.SetColor(5, y, Color.FG_DARK_YELLOW);
+            fireball.SetGlyph(2, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(3, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(4, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(5, y, PixelType.PIXEL_SOLID);
+            y++;
+            fireball.SetColor(3, y, Color.FG_DARK_RED);
+            fireball.SetColor(4, y, Color.FG_DARK_RED);
+            fireball.SetGlyph(3, y, PixelType.PIXEL_SOLID);
+            fireball.SetGlyph(4, y, PixelType.PIXEL_SOLID);
+            
+            await fireball.Save("fireball.sprite");
         }
     }
 }
